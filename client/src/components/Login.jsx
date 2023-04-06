@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { loginFields } from "../constants/formFields";
-import FormAction from "./FormAction";
-import FormExtra from "./FormExtra";
+import axios from "axios";
+import FormAction from "./Form/FormAction";
+import FormExtra from "./Form/FormExtra";
 import Input from "./Input";
 
 const fields = loginFields;
@@ -17,11 +18,24 @@ export default function Login() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    authenticateUser();
+    console.log(loginState);
+    const formdata = new FormData(e.target),
+      formDataObj = Object.fromEntries(formdata.entries());
+    console.log(formDataObj);
+    axios
+      .post("http://localhost:3000/user/signin", formDataObj)
+      .then(function (response) {
+        console.log(response);
+        if (response.status === 200) {
+          try {
+            localStorage.setItem("profile", JSON.stringify(response.data));
+            location.replace("/");
+          } catch (err) {
+            console.log(err);
+          }
+        }
+      });
   };
-
-  //Handle Login API Integration here
-  const authenticateUser = () => {};
 
   return (
     <form className="mt-8 space-y-6" onSubmit={handleSubmit}>

@@ -1,79 +1,31 @@
-import express, { urlencoded } from "express";
+import express from "express";
 import * as dotenv from "dotenv";
-import { hash, compare } from "bcrypt";
-// import { MongoClient } from "mongodb";
 import mongoose from "mongoose";
-// const saltRounds = 10;
+import cors from "cors";
+
+import userRouter from "./routes/user.js";
+
+const app = express();
 
 dotenv.config();
 
-const app = express();
-app.use(express.urlencoded({ extended: true }));
+app.use(cors());
 
-mongoose.connect(process.env.MONGO_URL).then(() => {
-  console.log("Connected to MongoDB");
-});
-const client = mongoose.connection;
+app.use(express.json({ limit: "30mb", extended: true }));
+app.use(express.urlencoded({ limit: "30mb", extended: true }));
 
-app.get("/", async (req, res) => {
-  res.send("hello world");
-});
+app.use("/user", userRouter);
 
-app.post("/signup", async (req, res) => {
-  const db = client.useDb("mydatabase");
-  const collection = db.collection("users");
-  const result = await collection.findOne({ email: req.body.myemail });
+const PORT = process.env.PORT || 3000;
 
-  if (!result) {
-    try {
-      const hasedpassword = await hash(req.body.mypassword, saltRounds);
-      await collection.insertOne({
-        name: req.body.myname,
-        email: req.body.myemail,
-        password: hasedpassword,
-      });
-    } catch (e) {
-      console.error(e);
-    }
-  } else {
-    console.log("user already exists");
-    // return res.status(208).send("user already exists");
-  }
-  //   client.close();
-  //   res.redirect("/login");
-});
-
-app.post("/signin", async function (req, res) {
-  const db = client.useDb("mydatabase");
-  const collection = db.collection("users");
-  const result = await collection.findOne({ email: req.body.myemail });
-
-  if (result) {
-    const password = req.body.mypassword;
-    const hasedpassword = result.password;
-    const isPasswordCorrect = await compare(password, hasedpassword);
-
-    if (isPasswordCorrect) {
-      res.redirect("/");
-    } else {
-      console.log("password is incorrect");
-      //   res.redirect("/login");
-    }
-  } else {
-    console.log("user dosen't exists");
-    // res.redirect("/login");
-  }
-  client.close();
-});
-
-// app.get("/register", (req, res) => {
-//   res.sendFile(__dirname + "/templates/signup.html");
-// });
-
-// app.get("/login", (req, res) => {
-//   res.sendFile(__dirname + "/templates/signin.html");
-// });
-
-app.listen(3000, () => {
-  console.log("Server is running at port 3000");
-});
+mongoose
+  .connect(process.env.MONGO_URL, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() =>
+    app.listen(PORT, () =>
+      console.log(`Server Running on Port: http://localhost:${PORT}`)
+    )
+  )
+  .catch((error) => console.log(`${error} did not connect`));

@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { signupFields } from "../constants/formFields";
-import FormAction from "./FormAction";
+import axios from "axios";
+
+import FormAction from "./Form/FormAction";
 import Input from "./Input";
 
 const fields = signupFields;
@@ -17,11 +19,23 @@ export default function Signup() {
   const handleSubmit = (e) => {
     e.preventDefault();
     console.log(signupState);
-    createAccount();
+    const formdata = new FormData(e.target),
+      formDataObj = Object.fromEntries(formdata.entries());
+    console.log(formDataObj);
+    axios
+      .post("http://localhost:3000/user/signup", formDataObj)
+      .then(function (response) {
+        console.log(response);
+        if (response.status === 201) {
+          try {
+            localStorage.setItem("profile", JSON.stringify(response.data));
+            location.replace("/");
+          } catch (err) {
+            console.log(err);
+          }
+        }
+      });
   };
-
-  //handle Signup API Integration here
-  const createAccount = () => {};
 
   return (
     <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
